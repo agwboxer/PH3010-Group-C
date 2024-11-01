@@ -1,0 +1,144 @@
+class OrbitalDynamics():
+    '''Class representing a double pendulum simulation.'''
+    def __init__(self, L1=1.0, L2=1.0, M1=1.0, M2=1.0, G=9.81):
+        '''Initialises the double pendulum simulation.
+        Parameters:
+        - L1 (float): Length of the first pendulum arm.
+        - L2 (float): Length of the second pendulum arm.
+        - M1 (float): Mass of the first pendulum mass.
+        - M2 (float): Mass of the second pendulum mass.
+        - G (float): Acceleration due to gravity.'''
+        
+        self.L1 = L1
+        self.L2 = L2
+        self.M1 = M1
+        self.M2 = M2
+        self.G = G
+        self.animation_running = False
+        self.dt = 0.05 # can alter 
+        self.t = np.arange(0.0, 20, self.dt)
+        self.state = np.radians([120.0, 0.0, -10.0, 0.0])
+        self.create_animation_figure()
+        self.create_widgets()
+        self.create_sliders()
+        
+        self.text_ke = self.ax.text(0.05, 0.9, '', transform=self.ax.transAxes)
+        self.text_pe = self.ax.text(0.05, 0.8, '', transform=self.ax.transAxes)
+        self.text_u = self.ax.text(0.05, 0.7, '', transform=self.ax.transAxes)
+    
+        
+    def create_animation_figure(self):
+        '''Creates an animation figure of the pendula'''
+        self.fig, self.ax = plt.subplots(figsize=(6, 5))
+        self.line, = self.ax.plot([], [], 'o-', lw=2.5)
+        self.ax.set_xlim(-10, 10)
+        self.ax.set_ylim(-10, 10)
+        self.ax.set_title('Double Pendulum Animation')
+        self.ax.grid(True)
+        self.ax.set_xlabel('x')
+        self.ax.set_ylabel('y')
+        
+        
+    def create_widgets(self):
+        '''Create widgets for controlling the simulation.'''
+        self.color_picker = widgets.ColorPicker(value='blue', description='Pick a colour')
+        self.color_picker.observe(self.pendula_color, 'value')
+        display(self.color_picker)
+        
+        self.start_button = widgets.Button(description="START", style={'button_color': '#45c258'})  
+        self.stop_button = widgets.Button(description="STOP", style={'button_color': '#fe4941'})   
+        self.randomise_button = widgets.Button(description="Randomise Theta", style={'button_color': '#7bb2de'})  
+        
+        self.start_button.on_click(self.start_animation)
+        self.stop_button.on_click(self.stop_animation)
+        self.randomise_button.on_click(self.randomise_theta)
+        display(widgets.HBox([self.start_button, self.stop_button, self.randomise_button]))
+        
+    def create_sliders(self):
+        '''Sliders created for adjusting parameters.'''
+        self.L1_slider = widgets.FloatSlider(min=1, max=5.0, value=self.L1, description='Length 1', layout=Layout(width='50%'))
+        self.L2_slider = widgets.FloatSlider(min=1, max=5.0, value=self.L2, description='Length 2', layout=Layout(width='50%'))
+        self.M1_slider = widgets.FloatSlider(min=1, max=10.0, value=self.M1, description='Mass 1', layout=Layout(width='50%'))
+        self.M2_slider = widgets.FloatSlider(min=1, max=10.0, value=self.M2, description='Mass 2', layout=Layout(width='50%'))
+        self.G_slider = widgets.FloatSlider(min=1.00, max=10.0, value=self.G, description='Gravity', layout=Layout(width='50%'))
+        self.numerical_method_dropdown = widgets.Dropdown(options=['Euler', 'Runge-Kutta'],
+                                                         value=self.numerical_method,
+                                                          description='Method', layout=Layout(width='50%'))
+        
+        self.L1_slider.observe(self.update_parameters, names='value')
+        self.L2_slider.observe(self.update_parameters, names='value')
+        self.M1_slider.observe(self.update_parameters, names='value')
+        self.M2_slider.observe(self.update_parameters, names='value')
+        self.G_slider.observe(self.update_parameters, names='value')
+        self.numerical_method_dropdown.observe(self.update_parameters, names='value')
+
+        display(widgets.VBox([self.L1_slider, self.L2_slider, self.M1_slider, self.M2_slider, self.G_slider, self.numerical_method_dropdown]))
+
+    def derivs(self, state, t):
+        '''Calculate the derivatives of the state variables.
+
+        Parameters:
+        - state (numpy.ndarray): Current state of the system.
+        - t (float): Current time.
+
+        Returns:
+        - numpy.ndarray: Array of derivatives.
+        '''
+        dydx = np.zeros_like(state)
+        dydx[0] = state[1]
+
+        del_ = state[2] - state[0]
+        den1 = (self.M1 + self.M2) * self.L1 - self.M2 * self.L1 * np.cos(del_) * np.cos(del_)
+        dydx[1] = (self.M2 * self.L1 * state[1] * state[1] * np.sin(del_) * np.cos(del_) +
+                   self.M2 * self.G * np.sin(state[2]) * np.cos(del_) +
+                   self.M2 * self.L2 * state[3] * state[3] * np.sin(del_) -
+                   (self.M1 + self.M2) * self.G * np.sin(state[0])) / den1
+
+        dydx[2] = state[3]
+
+        den2 = (self.L2 / self.L1) * den1
+        dydx[3] = (-self.M2 * self.L2 * state[3] * state[3] * np.sin(del_) * np.cos(del_) +
+                   (self.M1 + self.M2) * self.G * np.sin(state[0]) * np.cos(del_) -
+                   (self.M1 + self.M2) * self.L1 * state[1] * state[1] * np.sin(del_) -
+                   (self.M1 + self.M2) * self.G * np.sin(state[2])) / den2
+
+        return dydx
+    
+    def calculate_energy(self):
+        '''Calculate the kinetic, potential, and total mechanical energy.
+
+        Returns:
+        - Tuple: Tuple containing kinetic, potential, and total mechanical energy.
+        '''
+        ke = 0.5 * (self.M1 * self.L1**2 * self.state[1]**2 + self.M2 * self.L1**2 * self.state[1]**2) + (self.L2**2 * self.state[3]**2) + (2 * self.L1 * self.L2 * self.state[1] * self.state[3] * np.cos(self.state[0]-self.state[2]))
+        pe = -((self.M1+self.M2) * self.G * self.L1 *  np.cos(self.state[0])) - (self.M2 * self.G * self.L2 * np.cos(self.state[2])) 
+        u = ke + pe
+
+        return ke, pe, u
+
+    
+    def numerical_method_integration(self,method):
+        '''Perform numerical integration using the selected method.'''
+        if method == 'Euler':
+            new_state = self.Euler_method(self.state, self.t)
+        elif method == 'Runge-Kutta':
+            new_state = self.RK4_method(self.state, self.t)
+        else:
+            raise ValueError("Invalid numerical method")
+
+        self.state = new_state
+
+    def Euler_method(self, state, t):
+        '''Apply the Euler method for numerical integration.'''
+        new_state = state + self.dt * self.derivs(state, t)
+        return new_state
+    
+    def RK4_method(self, state, t):
+        '''Apply the Runge-Kutta 4th order method for numerical integration.'''
+        k1 = self.derivs(state, t)
+        k2 = self.derivs(state + 0.5 * self.dt * k1, t + 0.5 * self.dt)
+        k3 = self.derivs(state + 0.5 * self.dt * k2, t + 0.5 * self.dt)
+        k4 = self.derivs(state + self.dt * k3, t + self.dt)
+
+        new_state = state + (self.dt / 6) * (k1 + 2 * k2 + 2 * k3 + k4)
+        return new_state
