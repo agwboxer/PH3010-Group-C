@@ -1,0 +1,55 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Constants 
+G = 4 * np.pi**2  # Gravitational constant in AU^3 yr^-2 M_sun^-1
+M = 1  # Mass of the Sun in Solar Masses
+
+# Define the system of ODEs
+def system_of_odes(state, t):
+    x, y, vx, vy = state
+    r = np.sqrt(x**2 + y**2) 
+    dxdt = vx  
+    dydt = vy  
+    dvxdt = -G * M * x / r**3  
+    dvydt = -G * M * y / r**3  
+    return np.array([dxdt, dydt, dvxdt, dvydt])
+
+def RK2(initial_conditions, t0, t_final, h):
+    # Number of steps
+    num_steps = int((t_final - t0) / h)
+    # Time and solution arrays
+    t = np.linspace(t0, t_final, num_steps + 1)
+    x = np.zeros((num_steps + 1, 4))  
+    x[0] = initial_conditions 
+
+    # RK2 method loop
+    for i in range(num_steps):
+        k1 = h * system_of_odes(x[i], t[i])  
+        k2 = h * system_of_odes(x[i] + 0.5 * k1, t[i] + 0.5 * h) 
+        x[i + 1] = x[i] + k2  
+    
+    return t, x
+
+# Initial conditions: position and velocity (x, y, vx, vy) in AU and AU/year
+initial_conditions = [0.39, 0.0, 0.0, 12.0]  
+t0 = 0  # Initial time (in years)
+t_final = 1  # Final time (1 year)
+h = 0.001  # Time step size in years
+
+# Solve the system using RK2
+t, solution = RK2(initial_conditions, t0, t_final, h)
+
+# Print the final iteration 
+print("Final state:", solution[-1])
+
+# Plot the orbit 
+plt.figure(figsize=(15, 10))
+plt.plot(solution[:, 0], solution[:, 1], label="Mercury's Orbit")
+plt.scatter(0, 0, color="orange", marker="o", label="Sun")  # Sun at the origin
+plt.xlabel("x position (AU)")
+plt.ylabel("y position (AU)")
+plt.legend()
+plt.title("Orbital Path of Mercury around the Sun using RK2 Method")
+plt.axis("equal")
+plt.show()
