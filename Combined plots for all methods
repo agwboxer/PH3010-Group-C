@@ -1,0 +1,127 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Constants and Initial Conditions
+xi = -0.307278     # Initial x position (perihelion) in AU
+yi = 0.0           # Initial y position in AU
+vix = 0            # Initial x velocity of Mercury in AU/year
+viy = 12.0         # Initial y velocity of Mercury in AU/year
+M = 1.0            # Mass of the Sun in solar mass units
+G = 4 * np.pi**2   # Gravitational constant in AU^3 / (year^2 * solar mass)
+
+# Orbital parameters
+T = np.sqrt(0.387**3)  # Orbital period in years
+T_final = 2 * T        # Simulate for 2 orbital periods
+steps = 100           # Number of steps
+
+# Time step for all methods
+dt = T_final / steps
+
+# Define acceleration functions
+def radius(x, y):
+    return np.sqrt(x**2 + y**2)
+
+def acceleration(x, y):
+    r = radius(x, y)
+    ax = -G * M * x / r**3
+    ay = -G * M * y / r**3
+    return np.array([ax, ay])
+
+# System of ODEs
+def system_of_odes(state, t):
+    x, y, vx, vy = state
+    r = np.sqrt(x**2 + y**2)
+    dxdt = vx
+    dydt = vy
+    dvxdt = -G * M * x / r**3
+    dvydt = -G * M * y / r**3
+    return np.array([dxdt, dydt, dvxdt, dvydt])
+
+# Euler Method
+def euler_method(xi, yi, vix, viy, dt, steps):
+    xpos, ypos = [xi], [yi]
+    vx, vy = vix, viy
+
+    for _ in range(steps):
+        ax, ay = acceleration(xpos[-1], ypos[-1])
+        vx += ax * dt
+        vy += ay * dt
+        xpos.append(xpos[-1] + vx * dt)
+        ypos.append(ypos[-1] + vy * dt)
+    
+    return xpos, ypos
+
+# Leapfrog Method
+def leapfrog_method(xi, yi, vix, viy, dt, steps):
+    xpos, ypos = [xi], [yi]
+    vx, vy = vix, viy
+
+    for _ in range(steps):
+        ax, ay = acceleration(xpos[-1], ypos[-1])
+        vx_mid = vx + 0.5 * ax * dt
+        vy_mid = vy + 0.5 * ay * dt
+        xpos.append(xpos[-1] + vx_mid * dt)
+        ypos.append(ypos[-1] + vy_mid * dt)
+        ax_new, ay_new = acceleration(xpos[-1], ypos[-1])
+        vx = vx_mid + 0.5 * ax_new * dt
+        vy = vy_mid + 0.5 * ay_new * dt
+    
+    return xpos, ypos
+
+# RK2 Method
+def rk2_method(initial_conditions, t0, t_final, h):
+    num_steps = int((t_final - t0) / h)
+    x = np.zeros((num_steps + 1, 4))
+    x[0] = initial_conditions
+    xpos, ypos = [x[0][0]], [x[0][1]]
+
+    for i in range(num_steps):
+        k1 = h * system_of_odes(x[i], t0 + i * h)
+        k2 = h * system_of_odes(x[i] + 0.5 * k1, t0 + (i + 0.5) * h)
+        x[i + 1] = x[i] + k2
+        xpos.append(x[i + 1][0])
+        ypos.append(x[i + 1][1])
+    
+    return xpos, ypos
+
+# RK4 Method
+def rk4_method(initial_conditions, t0, t_final, h):
+    steps = int((t_final - t0) / h)
+    x = np.zeros((steps + 1, 4))
+    x[0] = initial_conditions
+    xpos, ypos = [x[0][0]], [x[0][1]]
+
+    for i in range(steps):
+        k1 = h * system_of_odes(x[i], t0 + i * h)
+        k2 = h * system_of_odes(x[i] + 0.5 * k1, t0 + (i + 0.5) * h)
+        k3 = h * system_of_odes(x[i] + 0.5 * k2, t0 + (i + 0.5) * h)
+        k4 = h * system_of_odes(x[i] + k3, t0 + (i + 1) * h)
+        x[i + 1] = x[i] + (k1 + 2 * k2 + 2 * k3 + k4) / 6
+        xpos.append(x[i + 1][0])
+        ypos.append(x[i + 1][1])
+    
+    return xpos, ypos
+
+
+# Initial conditions
+initial_conditions = [xi, yi, vix, viy]
+
+# Run all methods
+euler_x, euler_y = euler_method(xi, yi, vix, viy, dt, steps)
+leapfrog_x, leapfrog_y = leapfrog_method(xi, yi, vix, viy, dt, steps)
+rk2_x, rk2_y = rk2_method(initial_conditions, t0=0, t_final=T_final, h=dt)
+rk4_x, rk4_y = rk4_method(initial_conditions, t0=0, t_final=T_final, h=dt)
+
+# Plotting all four methods on the same graph
+plt.figure(figsize=(10, 10))
+plt.plot(euler_x, euler_y, label="Euler's Method", linestyle='--', color='blue', alpha=0.7)
+plt.plot(leapfrog_x, leapfrog_y, label="Leapfrog Method", linestyle='-', color='green')
+plt.plot(rk2_x, rk2_y, label="RK2 Method", linestyle='-.', color='purple')
+plt.plot(rk4_x, rk4_y, label="RK4 Method", linestyle='-', color='red')
+plt.scatter(0, 0, color='orange', marker='o', label='Sun')
+plt.xlabel("x (AU)")
+plt.ylabel("y (AU)")
+plt.title("Comparison of Mercury's Orbit: Euler, Leapfrog, RK2, and RK4 Methods")
+plt.legend()
+plt.axis('equal')
+plt.show()
