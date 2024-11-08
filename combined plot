@@ -158,24 +158,4 @@ plt.scatter(xs, ys, marker='o', label='Sun', color = 'orange')
 plt.legend(loc="upper right")
 plt.show()
 
-for _ in range(steps - 1):
-    # Calculate acceleration at current position
-    ax = acceleration(xpos_leapfrog[-1], xpos_leapfrog[-1], ypos_leapfrog[-1])
-    ay = acceleration(ypos_leapfrog[-1], xpos_leapfrog[-1], ypos_leapfrog[-1])
-
-    # Kick: Update velocity to midpoint
-    vx_mid = vx_leapfrog + 0.5 * ax * dt
-    vy_mid = vy_leapfrog + 0.5 * ay * dt
-
-    # Drift: Update position with midpoint velocity
-    xpos_leapfrog.append(xpos_leapfrog[-1] + vx_mid * dt)
-    ypos_leapfrog.append(ypos_leapfrog[-1] + vy_mid * dt)
-
-    # Calculate new acceleration at updated position
-    ax_new = acceleration(xpos_leapfrog[-1], xpos_leapfrog[-1], ypos_leapfrog[-1])
-    ay_new = acceleration(ypos_leapfrog[-1], xpos_leapfrog[-1], ypos_leapfrog[-1])
-
-    # Kick: Final update to velocity
-    vx_leapfrog = vx_mid + 0.5 * ax_new * dt
-    vy_leapfrog = vy_mid + 0.5 * ay_new * dt
 
