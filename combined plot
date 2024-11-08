@@ -1,0 +1,181 @@
+#all the code into one 
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+#initial conditions, all initial values taken at the perihelion in standard astronomical units
+xi = -0.307278      # inital x position taken as the semi major of mercurys orbit minus this value times the orbital eccentricity
+yi = 0.0            # Initial y value
+xs = 0.0            # x position of sun
+ys = 0.0            # y position of sun
+vix = 0             # Initial x velocity of mercury 
+viy = 12.0          # Initial y velocity of mercury 
+Ms = 1.0            # Mass of the sun in solar mass units 
+G = 4*np.pi**2      # Gravitational constant G 
+a = 0.387           # Semi major distance
+Tsq = a**3          # Orbit Period squared
+T = np.sqrt(Tsq)    # Orbit period
+
+steps = 25000         # Number of steps plotted over, an increase in the number of steps makes the orbit more and more correct, and the orbits begins to overlap with itself
+dt = T/steps        # Length of a step defined by the period and how many steps there are 
+t = np.arange(0.0, T, dt)   #array of each step up to the period
+
+def radius(x, y):
+    """
+    Parameters
+    ----------
+    x : x position of mercury
+    y : y position of mercury
+    Returns
+    -------
+    current radius of the star
+    """
+    return np.sqrt(x**2 + y**2)
+
+def SecondDev(position, xpos, ypos):
+    """
+    Parameters
+    ----------
+    position : the position of whatever variable you want the acceleration of, e.g. xpos or ypos
+    xpos : the x position of mercury
+    ypos : the y position of mercury
+    Returns
+    -------
+    2nd derivative of x or y with respect to time
+    """
+    return -G * Ms * (position - xs)/(radius(xpos, ypos))**3
+
+def EulerFirst(x0, v0):
+    """
+    Parameters
+    ----------
+    x0 : initial x or y position in the equation for eulers method x(n+1) = x(n) + dt*xdot(n)
+    v0 :initial velocity in x or y, xdot(n) in the equation above
+    Returns
+    -------
+    position in x or y after an increment of time dt
+    """
+    return x0 + dt*v0
+
+def EulerSecond(v0, f):
+    """
+    Parameters
+    ----------
+    v0 = inital x or y velocty in equation for eulers method xdot(n+1) = xdot(n) + dt*function(x)
+    f = function that describes the x or y acceleration of the object as a function of x or y 
+    Returns
+    -------
+    velocity in x or y after an increment of time dt
+    """
+    return v0 + dt*f
+
+#creating empty lists to append the values to
+xpos_list = []
+ypos_list =[]
+vx_list = []
+vy_list = []
+
+#setting the variables to the initial values so that they can be implemented to Euler
+vx = vix
+vy = viy
+xpos = xi
+ypos = yi
+
+# Set all of the variables in base_var so that wen theyre changed in the below loop, they dont affect each other before the end of the loop and n goes to n+1
+base_vars = xpos, ypos, vx, vy
+
+
+# loop over the amount of steps to find the x and y position and velocity at each time increment
+for i ,val in enumerate(t):
+    # finding the x data (position and velocty)
+    vx = EulerSecond(base_vars[2], SecondDev(base_vars[0], base_vars[0], base_vars[1]))     #velocity of x(n+1), x after a dt, call base_var[index] as x_o and vx_0
+    xpos = EulerFirst(base_vars[0], base_vars[2])                                           #position of x(n+1).
+    vx_list.append(vx)                                                                      #Append the velocity and then the positions to the list
+    xpos_list.append(xpos)
+    
+    # finding the y data (position and velocity)
+    vy = EulerSecond(base_vars[3], SecondDev(base_vars[1], base_vars[0], base_vars[1]))     #velocity of x(n+1), x after a dt
+    ypos = EulerFirst(base_vars[1], base_vars[3])
+    vy_list.append(vy)
+    ypos_list.append(ypos)
+    
+    #change all the variables to their new values for the beginning of the next loop
+    base_vars = xpos, ypos, vx, vy
+
+# Define the system of ODEs
+def system_of_odes(state, t):
+    x, y, vx, vy = state
+    r = np.sqrt(x**2 + y**2) 
+    dxdt = vx  
+    dydt = vy  
+    dvxdt = -G * Ms * x / r**3  
+    dvydt = -G * Ms * y / r**3  
+    return np.array([dxdt, dydt, dvxdt, dvydt])
+
+
+def RK2(initial_conditions, t0, t_final, h):
+    # Number of steps
+    num_steps = int((t_final - t0) / h)
+    # Time and solution arrays
+    t = np.linspace(t0, t_final, num_steps + 1)
+    x = np.zeros((num_steps + 1, 4))  
+    x[0] = initial_conditions 
+
+    # RK2 method loop
+    for i in range(num_steps):
+        k1 = h * system_of_odes(x[i], t[i])  
+        k2 = h * system_of_odes(x[i] + 0.5 * k1, t[i] + 0.5 * h) 
+        x[i + 1] = x[i] + k2  
+    
+    return t, x
+
+initial_conditions = [-0.307278 , 0.0, 0.0, 12.0]  
+t0 = 0  # Initial time (in years)
+t_final = 1  # Final time (1 year)
+h = 0.001  # Time step size in years
+
+# Solve the system using RK2
+t, solution = RK2(initial_conditions, t0, t_final, h)
+
+# Print the final iteration 
+print("Final state:", solution[-1])
+
+plt.figure()
+
+plt.plot(solution[:, 0], solution[:, 1], label="RK2 Orbit")
+plt.scatter(0, 0, color="orange", marker="o")  # Sun at the origin
+plt.xlabel("x position (AU)")
+plt.ylabel("y position (AU)")
+plt.legend()
+plt.title("Orbital Path of Mercury around the Sun using RK2 Method")
+plt.axis("equal")
+
+
+# Plot the orbit and the sun    
+plt.plot(xpos_list, ypos_list, label= "Euler Orbit", color= "red")
+plt.scatter(xs, ys, marker='o', label='Sun', color = 'orange')
+plt.legend(loc="upper right")
+plt.show()
+
+for _ in range(steps - 1):
+    # Calculate acceleration at current position
+    ax = acceleration(xpos_leapfrog[-1], xpos_leapfrog[-1], ypos_leapfrog[-1])
+    ay = acceleration(ypos_leapfrog[-1], xpos_leapfrog[-1], ypos_leapfrog[-1])
+
+    # Kick: Update velocity to midpoint
+    vx_mid = vx_leapfrog + 0.5 * ax * dt
+    vy_mid = vy_leapfrog + 0.5 * ay * dt
+
+    # Drift: Update position with midpoint velocity
+    xpos_leapfrog.append(xpos_leapfrog[-1] + vx_mid * dt)
+    ypos_leapfrog.append(ypos_leapfrog[-1] + vy_mid * dt)
+
+    # Calculate new acceleration at updated position
+    ax_new = acceleration(xpos_leapfrog[-1], xpos_leapfrog[-1], ypos_leapfrog[-1])
+    ay_new = acceleration(ypos_leapfrog[-1], xpos_leapfrog[-1], ypos_leapfrog[-1])
+
+    # Kick: Final update to velocity
+    vx_leapfrog = vx_mid + 0.5 * ax_new * dt
+    vy_leapfrog = vy_mid + 0.5 * ay_new * dt
+
