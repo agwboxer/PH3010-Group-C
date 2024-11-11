@@ -49,7 +49,7 @@ def server(input, output, session):
             plt.xlabel("x (AU)")  # Label for the x-axis
             plt.ylabel("y (AU)")  # Label for the y-axis
             plt.grid(True)  # Add grid for better readability
-            plt.legend()  # Show the legend to identify the Sun and the orbit method
+            plt.legend(loc='upper left')  # Show the legend to identify the Sun and the orbit method
 
         # Create the plots for each numerical method
         @output
@@ -59,14 +59,14 @@ def server(input, output, session):
             Render the plot for the Euler method.
             """
             plot_orbit(euler_t, euler_sol, "Euler Method")
-
+            
         @output
         @render.plot
         def plot_rk2():
             """
             Render the plot for the RK2 method.
             """
-            plot_orbit(rk2_t, rk2_sol, "RK2 Method")
+            plot_orbit(rk4_t, rk4_sol, "RK4 Method")
 
         @output
         @render.plot
@@ -74,7 +74,7 @@ def server(input, output, session):
             """
             Render the plot for the RK4 method.
             """
-            plot_orbit(rk4_t, rk4_sol, "RK4 Method")
+            plot_orbit(rk2_t, rk2_sol, "RK2 Method")
 
 
 # Run the app
