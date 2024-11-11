@@ -1,6 +1,6 @@
 import numpy as np
 
-class Simulator:
+class Solver:
     def __init__(self, Ecc=0.2056, a=0.387, Ms=1.0):
         # Initialize system parameters
         self.Ecc = Ecc                # Eccentricity of orbit (Mercury)
@@ -87,7 +87,7 @@ class Simulator:
 
 
 
-simulation = TwoBodySimulation()
+simulation = Solver()
 
 
 simulation.set_initial_conditions(-0.3, 0.0, 0.0, 8.0)
