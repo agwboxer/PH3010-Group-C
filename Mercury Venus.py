@@ -142,6 +142,7 @@ plt.ylim(-1, 1)
 plt.zlim = (-0.5, 0.5)
 plt.legend()
 
+# Can hash out everything below here if you dont want the animation and just want the plot
 def update(frame):
     # lower_lim = max(0, frame - 300)  # hash in if dont want full lines trailing behind the animation,then add lower_lim before the colons in the next code lines
     print(f"Progress: {(frame+1)/len(t):.1%}", end='\r')
