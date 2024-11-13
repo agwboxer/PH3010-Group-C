@@ -35,7 +35,7 @@ viy_calcV = np.sqrt(((2*4*np.pi**2)*(1/peri_dV - 1/aphe_dV))/(1-(peri_dV/aphe_dV
 Ms_kg = 1.989*10**30
 Ms = 1.0            # Mass of the sun in solar mass units 
 Mm = 0.33*10**24 / Ms_kg
-Mj = 4.87*10**24 / Ms_kg  #954.79194*10**(-6)
+Mv = 4.87*10**24 / Ms_kg  #954.79194*10**(-6)
 G = 4*np.pi**2      # Gravitational constant G 
 
 
@@ -88,7 +88,7 @@ solution = solve_ivp(
     t_span = (0, Factor*T),
     y0 = initial_conditions_new,
     t_eval = t,
-    args = (Mm, Mj),
+    args = (Mm, Mv),
     method='RK23'     #RK23 replaces the standard RK45 when method is unspecified
     )
 
