@@ -111,7 +111,7 @@ x_rk4, y_rk4 = rk4_method([xi, yi, vix, viy], 0, T_final, dt)
 
 # plots for the orbits for comparison
 plt.figure(figsize=(14, 10))
-plt.plot(x)
+plt.plot(0, 0, 'yo', label="Sun", markersize=10)
 plt.plot(x_true, y_true, 'k', label='RK23', linewidth=2)
 plt.plot(x_euler, y_euler, 'r--', label='Euler Method')
 plt.plot(x_leapfrog, y_leapfrog, 'g--', label='Leapfrog Method')
