@@ -2,12 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class GRMercuryOrbit:
-    def __init__(self, G=39.478, M=1, c_prime=63.239, x0=0.307, y0=0, vx0=0, vy0=12.4375, GRplot=False):
+    def __init__(self, G=39.478, M=1, c_prime=63.239, x0=0.307, y0=0, vx0=0, vy0=12.4375):
         self.G = G
         self.M = M
         self.c_prime = c_prime  # Modified speed of light
         self.initial_state = np.array([x0, y0, vx0, vy0])
-        self.GRplot = GRplot
+
 
     def derivatives(self, t, state, include_gr=True):
         """Calculate the derivatives for the state [x, y, vx, vy]."""
@@ -72,8 +72,3 @@ class GRMercuryOrbit:
             perihelion_advances.append(delta_angle)
         
         return np.array(trajectory), perihelions, perihelion_advances
-            
-    
-
-
-# Example usage:
