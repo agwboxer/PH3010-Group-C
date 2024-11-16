@@ -34,7 +34,7 @@ time_eval = np.linspace(0, 0.2407, 1000)  # Time evaluation points
 solution_mercury = solve_ivp(mercury_orbit, time_span, initial_state, t_eval=time_eval)
 
 # Example file_path - Replace with your actual file path
-file_path = 'horizons_results (3).txt'
+file_path = 'horizons_results.txt'
 
 # Initialize lists to hold the position (x) and velocity (vx) values from the observational data
 x_values = []
