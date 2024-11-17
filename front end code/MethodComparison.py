@@ -1,12 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-class OrbitalSimulation:
-    def __init__(self):
+class OrbitComparison:
+    def __init__(self, ecc=0.2056, a = 0.387):
         # Initial conditions, all initial values taken at the perihelion in standard astronomical units
-        self.Ecc = 0.2056  # Eccentricity of orbit (Mercury)
-        self.a = 0.387  # Semi-major axis distance (AU)
-        self.b = self.a * np.sqrt(1 - self.Ecc**2)  # Semi-minor axis (AU)
+        self.Ecc = ecc  # Eccentricity of orbit (Mercury)
+        self.a = a  # Semi-major axis distance (AU)
+        self.b = self.a * np.sqrt(1 - self.Ecc**2)
         self.Tsq = self.a**3  # Orbit Period squared (yr^2)
         self.T = np.sqrt(self.Tsq)  # Orbit period (yr)
 
@@ -109,23 +109,4 @@ class OrbitalSimulation:
 
             store_t_data.append(val)
 
-        self.plot_results(store_t_data, store_E_dist, store_RK2_dist, store_RK4_dist)
-
-    def plot_results(self, store_t_data, store_E_dist, store_RK2_dist, store_RK4_dist):
-        """Plot the results."""
-        plt.figure()
-        plt.scatter(store_t_data, store_E_dist, label='Euler', marker='.')
-        plt.scatter(store_t_data, store_RK2_dist, label='RK2', marker='.')
-        plt.scatter(store_t_data, store_RK4_dist, label='RK4', marker='.')
-        plt.xlabel('No. of timesteps')
-        plt.ylabel('Distance from start (AU)')
-        plt.title('Effect of timestep on orbital accuracy')
-        plt.legend()
-        plt.grid()
-        plt.show()
-
-
-if __name__ == "__main__":
-    simulation = OrbitalSimulation()
-    steps_data = np.linspace(10, 500, 50)
-    simulation.run_simulation(steps_data)
+        return store_t_data, store_E_dist, store_RK2_dist, store_RK4_dist
