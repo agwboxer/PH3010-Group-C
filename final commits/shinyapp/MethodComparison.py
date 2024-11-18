@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
-class MercuryOrbitSimulation:
+class Numerical_Comparison:
     def __init__(self, ecc=0.2056, a=0.387):
         # Initial conditions, all initial values taken at perihelion in standard astronomical units
         self.Ecc = ecc  # Eccentricity of orbit (Mercury)
