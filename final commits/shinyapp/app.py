@@ -4,10 +4,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from shinyswatch import theme
 
-from GR_corr import GRMercuryOrbit
-from solver import MercuryOrbit
-from MethodComparison import MercuryOrbitSimulation
-from threebody import ThreeBodySimulation
+from GR_Corrections import GR_Orbit
+from Newtonian_Simulation import Newtonian_Orbit
+from MethodComparison import Numerical_Comparison
+from Three_Body_Simulation import ThreeBodySimulation
 
 # UI Configuration, sets title and page theme
 ui.page_opts(title="Numerical Methods of Modelling the Orbit of Mercury", theme=theme.morph)
