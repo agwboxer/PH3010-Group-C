@@ -1,6 +1,6 @@
 import numpy as np
 
-class MercuryOrbit:
+class Newtonian_Orbit:
     def __init__(self, ecc=0.2056, a=0.387, steps=100):
         self.ecc = ecc
         self.a = a
