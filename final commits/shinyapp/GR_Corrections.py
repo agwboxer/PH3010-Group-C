@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-class GRMercuryOrbit:
+class GR_Orbit:
     def __init__(self, G=39.478, M=1, c_prime=63.239, x0=0.307, y0=0, vx0=0, vy0=12.4375):
         self.G = G
         self.M = M
