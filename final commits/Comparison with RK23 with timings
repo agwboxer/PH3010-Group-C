@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
+import time
 
 # constants and initial conditions
 xi = -0.307278     # initial x position (perihelion) in AU
@@ -36,14 +37,12 @@ def system_of_odes(t, state):
     dvydt = -G * M * y / r**3
     return np.array([dxdt, dydt, dvxdt, dvydt])
 
-# solve the system using solve_ivp using RK23
-solution = solve_ivp(system_of_odes, [0, T_final], [xi, yi, vix, viy], method='RK23', t_eval=np.linspace(0, T_final, steps))
-#solution = solve_ivp(system_of_odes, [0, T_final], [xi, yi, vix, viy], method='RK45', t_eval=np.linspace(0, T_final, steps),rtol=1e-2, atol=1e-4)
-
-t_true = solution.t
-x_true, y_true = solution.y[0], solution.y[1]
-#print(solution.y[0], solution.y[1])
-
+# wrapper function to time methods
+def run_with_timing(method, *args):
+    start_time = time.perf_counter()
+    result = method(*args)
+    elapsed_time = time.perf_counter() - start_time
+    return result, elapsed_time
 
 # Euler Method
 def euler_method(xi, yi, vix, viy, dt, steps):
@@ -103,11 +102,23 @@ def rk4_method(initial_conditions, t0, t_final, h):
         ypos.append(x[i + 1][1])
     return xpos, ypos
 
-# execute the methods
-x_euler, y_euler = euler_method(xi, yi, vix, viy, dt, steps)
-x_leapfrog, y_leapfrog = leapfrog_method(xi, yi, vix, viy, dt, steps)
-x_rk2, y_rk2 = rk2_method([xi, yi, vix, viy], 0, T_final, dt)
-x_rk4, y_rk4 = rk4_method([xi, yi, vix, viy], 0, T_final, dt)
+# solve the system using solve_ivp using RK23
+solution, rk23_time = run_with_timing(solve_ivp, system_of_odes, [0, T_final], [xi, yi, vix, viy], 
+                                      'RK23', np.linspace(0, T_final, steps))
+x_true, y_true = solution.y[0], solution.y[1]
+
+# execute the other methods
+(x_euler, y_euler), euler_time = run_with_timing(euler_method, xi, yi, vix, viy, dt, steps)
+(x_leapfrog, y_leapfrog), leapfrog_time = run_with_timing(leapfrog_method, xi, yi, vix, viy, dt, steps)
+(x_rk2, y_rk2), rk2_time = run_with_timing(rk2_method, [xi, yi, vix, viy], 0, T_final, dt)
+(x_rk4, y_rk4), rk4_time = run_with_timing(rk4_method, [xi, yi, vix, viy], 0, T_final, dt)
+
+# print timings for all methods
+print(f"RK23 time: {rk23_time:.6f} seconds")
+print(f"Euler time: {euler_time:.6f} seconds")
+print(f"Leapfrog time: {leapfrog_time:.6f} seconds")
+print(f"RK2 time: {rk2_time:.6f} seconds")
+print(f"RK4 time: {rk4_time:.6f} seconds")
 
 # plots for the orbits for comparison
 plt.figure(figsize=(14, 10))
