@@ -7,13 +7,14 @@ from shinyswatch import theme
 from GR_corr import GRMercuryOrbit
 from solver import MercuryOrbit
 from MethodComparison import MercuryOrbitSimulation
+from threebody import ThreeBodySimulation
 
 # UI Configuration
-ui.page_opts(title="Numerical Methods of Modelling the Orbit of Mercury", theme=theme.quartz)
+ui.page_opts(title="Numerical Methods of Modelling the Orbit of Mercury", theme=theme.morph)
 
 with ui.sidebar():
     ui.input_select("select", "Select type", 
-                    choices=["Method Comparison", "Newtonian", "General Relativity Correction"])
+                    choices=["Method Comparison", "Newtonian", "General Relativity Correction", "Three Body"])
 
 @render.ui
 def simulation_ui():
@@ -31,7 +32,13 @@ def simulation_ui():
             ui.input_slider("eccentricity", "Eccentricity", min=0.0, max=0.9, value=0.2056, step=0.01),
             ui.input_slider("a", "Semi-major Axis (AU)", min=0.1, max=1.0, value=0.387, step=0.01),
         )
+    elif input.select == "Three Body":
+        return ui.TagList(
+            ui.input_slider("steps", "Time Steps", min=1000, max = 250000, value= 100000, step=1000),
+            ui.input_slider("t_end", "Simulation time (Days)", min = 1, max = 36500, value = 365, step = 50)
+        )
     return None
+
 
 @reactive.Calc
 def get_orbit():
@@ -47,6 +54,10 @@ def get_orbit():
         ecc = input.eccentricity()
         a = input.a()
         return MercuryOrbitSimulation(ecc, a)
+    elif input.select() == "Three Body":
+        steps = input.steps()
+        t_end = input.t_end()
+        return ThreeBodySimulation(0, t_end, steps)
     return None
 
 def plotter(orbit):
@@ -57,7 +68,7 @@ def plotter(orbit):
         _, sol_rk2 = orbit.rk2()
         _, sol_rk4 = orbit.rk4()
 
-        plt.figure(facecolor='lightblue')
+        plt.figure()
         plt.plot(sol_euler[:, 0], sol_euler[:, 1], label='Euler Method', color='red')
         plt.plot(sol_rk2[:, 0], sol_rk2[:, 1], label='RK2 Method', color='orange')
         plt.plot(sol_rk4[:, 0], sol_rk4[:, 1], label='RK4 Method', color='black')
@@ -66,8 +77,7 @@ def plotter(orbit):
         plt.ylabel("y (AU)")
         plt.title("Orbit of Mercury")
         plt.grid(True)
-        plt.legend(loc='upper left')
-        plt.gca().set_facecolor('tab:blue')
+        plt.legend(loc='upper left', frameon=False)
 
     elif isinstance(orbit, GRMercuryOrbit):
         # Plot orbit with GR correction using RK4 method
@@ -76,9 +86,9 @@ def plotter(orbit):
 
         @render.text
         def text():
-            return f"Perihelion advance per revolution: {perihelion_avg:.6f} arcseconds"
+            return f"Perihelion advance per revolution: {perihelion_avg} arcseconds"
 
-        plt.figure(facecolor='lightblue')
+        plt.figure()
         plt.plot(trajectory[:, 0], trajectory[:, 1], label='GR Correction', color='red')
         plt.axis('equal')
         plt.scatter(0, 0, color='yellow', label='Sun')
@@ -86,8 +96,7 @@ def plotter(orbit):
         plt.ylabel("y (AU)")
         plt.title("Orbit of Mercury")
         plt.grid(True)
-        plt.legend(loc='upper left')
-        plt.gca().set_facecolor('tab:blue')
+        plt.legend(loc='upper left', frameon=False)
 
     elif isinstance(orbit, MercuryOrbitSimulation):
         steps_data = np.linspace(10, input.steps(), 50)
@@ -105,7 +114,7 @@ def plotter(orbit):
         plt.xlabel('No. of timesteps')
         plt.ylabel('Distance from start (AU)')
         plt.title('Effect of Timestep on Orbital Accuracy')
-        plt.legend()
+        plt.legend(frameon=False)
         plt.grid()
 
         # Plot 2: Convergence plot (Error vs Step Size)
@@ -119,9 +128,41 @@ def plotter(orbit):
             plt.xlabel('Step Size')
             plt.ylabel('Global Error (AU)')
             plt.title('Convergence Plot')
-            plt.legend()
+            plt.legend(frameon=False)
             plt.grid()
-            
+
+    elif isinstance(orbit, ThreeBodySimulation):
+        
+        sol = orbit.run_simulation()
+        mercury_pos = sol.y[6:9, :]
+        venus_pos = sol.y[12:15, :]
+
+        # Set up the 3D plot
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+
+        # Adjusting the axis limits to give enough space for the orbits
+        ax.set_xlim(-1.5, 1.5)  # X-axis limit
+        ax.set_ylim(-1.5, 1.5)  # Y-axis limit
+        ax.set_zlim(-0.1, 0.1)  # Z-axis limit
+
+        # Plotting the orbits of Mercury and Venus
+        ax.plot(mercury_pos[0], mercury_pos[1], mercury_pos[2], '-', color="orange", label="Mercury", markersize=0.1)
+        ax.plot(venus_pos[0], venus_pos[1], venus_pos[2], '-', color="green", label="Venus", markersize=0.1)
+
+        # Plot the Sun at the origin
+        ax.plot([0], [0], [0], 'yo', markersize=10, label="Sun")
+
+        # Set the viewing angle for a better 3D perspective
+        ax.view_init(elev=30, azim=60)
+
+        # Labels and legend
+        ax.set_xlabel('X (AU)')
+        ax.set_ylabel('Y (AU)')
+        ax.set_zlabel('Z (AU)')
+        ax.legend(frameon=False)
+
+    return plt.gca()
 
         
 
