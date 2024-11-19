@@ -26,8 +26,11 @@ t_eval = np.linspace(0, t_max, 1000)
 # function to calculate initial velocity for elliptical orbits
 def compute_initial_conditions(semi_major_axis, eccentricity, mass):
     periapsis = semi_major_axis * (1 - eccentricity)  # closest point to the barycenter
-    # velocity at periapsis (using vis-viva equation)
-    velocity_periapsis = np.sqrt(G * mass * (2 / periapsis - 1 / semi_major_axis))
+    # velocity at periapsis using the derived equation
+    velocity_periapsis = np.sqrt(
+        (2 * G * mass * (1 / periapsis - 1 / (semi_major_axis * (1 + eccentricity)))) /
+        (1 - (periapsis / (semi_major_axis * (1 + eccentricity)))**2))
+
     return periapsis, velocity_periapsis
 
 # initial conditions for Mercury
