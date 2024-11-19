@@ -8,6 +8,7 @@ from GR_Corrections import GR_Orbit
 from Newtonian_Simulation import Newtonian_Orbit
 from MethodComparison import Numerical_Comparison
 from Three_Body_Simulation import ThreeBodySimulation
+from EnergyConsideration import calculate_energies
 
 # UI Configuration, sets title and page theme
 ui.page_opts(title="Numerical Methods of Modelling the Orbit of Mercury", theme=theme.morph)
@@ -37,6 +38,8 @@ def simulation_ui():
             ui.input_slider("steps", "Time Steps", min=50, max=25000, value=100, step=100),
             ui.input_slider("eccentricity", "Eccentricity", min=0.0, max=0.9, value=0.2056, step=0.01),
             ui.input_slider("a", "Semi-major Axis (AU)", min=0.1, max=1.0, value=0.387, step=0.01),
+            ui.input_switch("Energy", "Toggle energy considerations", value=False)
+
         )
     elif input.select() == "Three Body":
         return ui.TagList(
@@ -55,16 +58,16 @@ def get_orbit():
     - Object: The corresponding orbit simulation object based on the user input
     """
     if input.select() == "General Relativity Correction":
-        return GRMercuryOrbit()
+        return GR_Orbit()
     elif input.select() == "Newtonian":
         ecc = input.eccentricity()
         a = input.a()
         steps = input.steps()
-        return MercuryOrbit(ecc, a, steps)
+        return Newtonian_Orbit(ecc, a, steps)
     elif input.select() == "Method Comparison":
         ecc = input.eccentricity()
         a = input.a()
-        return MercuryOrbitSimulation(ecc, a)
+        return Numerical_Comparison(ecc, a)
     elif input.select() == "Three Body":
         steps = input.steps()
         t_end = input.t_end()
@@ -81,7 +84,7 @@ def plotter(orbit):
     Returns:
     - matplotlib axis: The axis on which the plot is drawn
     """
-    if isinstance(orbit, MercuryOrbit):
+    if isinstance(orbit, Newtonian_Orbit):
         # Plot Newtonian orbits using Euler, RK2, and RK4 methods
         _, sol_euler = orbit.euler()
         _, sol_rk2 = orbit.rk2()
@@ -98,7 +101,28 @@ def plotter(orbit):
         plt.grid(True)
         plt.legend(loc='upper left', frameon=False)
 
-    elif isinstance(orbit, GRMercuryOrbit):
+        if input.energy():
+            # Use the selected eccentricity, semi-major axis, and steps to instantiate the orbit
+
+            # Run the RK4 integrator
+            t_rk4, sol_rk4 = orbit.rk4()
+
+            # Calculate energies
+            K_rk4, U_rk4, E_rk4 = calculate_energies(sol_rk4)
+
+            # Plot the energies
+            plt.figure(figsize=(12, 6))
+            plt.plot(t_rk4, K_rk4, label="Kinetic Energy (KE)", color='blue')
+            plt.plot(t_rk4, U_rk4, label="Potential Energy (PE)", color='orange')
+            plt.plot(t_rk4, E_rk4, label="Total Energy (TE)", color='green', linestyle='--')
+            plt.xlabel("Time (years)")
+            plt.ylabel("Energy (arbitrary units)")
+            plt.title("Energy Conservation in the RK4 Numerical Simulation")
+            plt.legend()
+            plt.grid()
+
+
+    elif isinstance(orbit, GR_Orbit):
         # Plot orbit with GR correction using RK4 method
         trajectory, _, perihelion = orbit.runge_kutta_4(0, 1/365, 3650)
         perihelion_avg = np.mean(perihelion)
@@ -118,7 +142,7 @@ def plotter(orbit):
         plt.grid(True)
         plt.legend(loc='upper left', frameon=False)
 
-    elif isinstance(orbit, MercuryOrbitSimulation):
+    elif isinstance(orbit, Numerical_Comparison):
         steps_data = np.linspace(10, input.steps(), 50)
         store_t_data, store_E_dist, store_RK2_dist, store_RK4_dist = orbit.run_simulation(steps_data)
 
