@@ -6,7 +6,7 @@ Group C have decided to do the 'Investigating Orbital Dynamics' project. Our pri
 Alex Boxer, Oliver Blease, Shreya Ghosh, Carolena Lukaszek, Thomas Mansfield, Harry Nsubuga.
 
 ## Usage
-All code in ```final commits``` is the final and most up to date code produced. Files in ```shinyapp``` are to be run together - more information in [the folder](https://github.com/agwboxer/PH3010-Group-C/tree/main/final%20commits/shinyapp).
+All code in ```final commits``` is the final and most up to date code produced, ```archived code``` contains old code that has been made redundant or updated to a higher standard. Files in ```shinyapp``` are to be run together - more information in [the folder](https://github.com/agwboxer/PH3010-Group-C/tree/main/final%20commits/shinyapp).
 
 ## License
 
